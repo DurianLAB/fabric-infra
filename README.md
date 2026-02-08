@@ -19,8 +19,69 @@ Developed by [DurianLAB](https://durianlab.tech/).
 │   │   └── macvlan-networking/    # Production scenario with macvlan networks
 │   ├── test-macvlan-*.sh          # Connectivity testing scripts
 │   └── TROUBLESHOOTING.md         # Network configuration troubleshooting
+├── akash/                     # Akash GitOps Management Plane
+│   ├── Dockerfile             # Container image definition
+│   ├── deploy.yml             # Akash deployment manifest
+│   ├── entrypoint.sh          # Container startup script
+│   ├── hooks/
+│   │   └── post-receive       # Git trigger hook
+│   └── README.md              # Akash setup documentation
 ├── fabfile.py                 # Fabric automation tasks
 └── README.md                  # This file
+```
+
+## Akash GitOps Management Plane
+
+This repository includes a complete **Akash GitOps Management Plane** that solves the "chicken and egg" problem by hosting your automation "brain" on Akash (decentralized cloud) while keeping your infrastructure "brawn" on your home LXD host.
+
+### Architecture: Chicken & Egg Solution
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Your Laptop (Developer)                                     │
+│  └── git push → Akash Container                             │
+└───────────────────────┬─────────────────────────────────────┘
+                        │ Public Internet
+                        ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Akash Container (The "Brain")                              │
+│  ├── Git Server (bare repo)                                 │
+│  ├── Tailscale Client (100.x.y.z)                          │
+│  ├── Fabric Automation                                      │
+│  └── post-receive hook triggers deployment                  │
+└──────────┬──────────────────────────────────────────────────┘
+           │ Tailscale VPN (WireGuard)
+           ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Home LXD Host (The "Brawn")                                │
+│  ├── Tailscale Client (100.x.y.z)                          │
+│  ├── LXD/KVM Hypervisor                                     │
+│  └── Terraform applies infrastructure                       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Benefits:**
+- **Always-on** management plane (~$1-2/month on Akash)
+- **No exposed ports** on home network (Tailscale VPN)
+- **GitOps workflow** - push to deploy
+- **Secure** - WireGuard encryption, no public home IP
+
+### Quick Start with Akash
+
+See [akash/README.md](akash/README.md) for complete setup instructions.
+
+```bash
+# Deploy to Akash
+akash tx deployment create akash/deploy.yml --from $KEY_NAME
+
+# Get Akash URI
+akash provider lease-status --dseq $DSEQ --from $KEY_NAME
+
+# Add Git remote
+git remote add akash ssh://git@<akash-uri>:2222/home/git/fabric.git
+
+# Push to trigger deployment
+git push akash main
 ```
 
 ## Fabric Automation

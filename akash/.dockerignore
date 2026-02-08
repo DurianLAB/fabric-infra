@@ -1,0 +1,40 @@
+# Git
+.git
+.gitignore
+.gitmodules
+
+# Documentation
+*.md
+!README.md
+
+# Local development
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Terraform (will be cloned as submodule)
+terraform/
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Large files
+*.tar.gz
+*.zip

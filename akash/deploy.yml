@@ -1,0 +1,73 @@
+---
+version: "2.0"
+
+services:
+  fabric-manager:
+    image: your-dockerhub-user/fabric-manager:latest
+    expose:
+      - port: 2222
+        as: 2222
+        to:
+          - global: true
+    env:
+      # Tailscale Configuration
+      # Get auth key from: https://login.tailscale.com/admin/settings/keys
+      - TAILSCALE_AUTH_KEY=tskey-auth-kXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+      
+      # Home LXD Host Configuration
+      # These are the Tailscale IPs of your home LXD hosts
+      - HOME_LXD_HOST=100.x.y.z
+      - HOME_LXD_USER=ubuntu
+      
+      # SSH Private Key (for connecting to home LXD host)
+      # Generate with: ssh-keygen -t ed25519 -C "akash-fabric"
+      # Add public key to home host: ssh-copy-id -i ~/.ssh/id_ed25519.pub user@home-host
+      # Paste private key content here (use akash provider to set securely)
+      - SSH_PRIVATE_KEY=
+        -----BEGIN OPENSSH PRIVATE KEY-----
+        b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+       QyNTUxOQAAACBxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        -----END OPENSSH PRIVATE KEY-----
+      
+      # Git Configuration
+      - GIT_USER_NAME=GitOps
+      - GIT_USER_EMAIL=gitops@akash.network
+    
+    # Resource limits
+    resources:
+      cpu:
+        units: 1
+      memory:
+        size: 1Gi
+      storage:
+        size: 5Gi
+
+profiles:
+  compute:
+    fabric-manager:
+      resources:
+        cpu:
+          units: 1
+        memory:
+          size: 1Gi
+        storage:
+          size: 5Gi
+  
+  placement:
+    akash:
+      attributes:
+        host: akash
+      signedBy:
+        anyOf:
+          - "akash1365yvmc4s7awdyj3n2sav7xfx76adc6dnmlx63"
+      pricing:
+        fabric-manager:
+          denom: uakt
+          amount: 1000
+
+deployment:
+  fabric-manager:
+    akash:
+      profile: fabric-manager
+      count: 1

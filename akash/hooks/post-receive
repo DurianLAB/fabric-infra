@@ -1,0 +1,70 @@
+#!/bin/bash
+
+# Git post-receive hook for GitOps deployment
+# This runs inside the Akash container when code is pushed
+
+set -e
+
+echo "=== GitOps Deployment Triggered ==="
+
+# Configuration
+WORK_DIR="/tmp/gitops-deploy-$(date +%s)"
+TERRAFORM_DIR="/home/git/terraform"
+REPO_PATH="/home/git/fabric.git"
+
+# Read git push info
+read oldrev newrev refname
+branch=$(git rev-parse --symbolic --abbrev-ref $refname)
+
+echo "Branch: $branch"
+echo "Old rev: $oldrev"
+echo "New rev: $newrev"
+
+# Clone the pushed code to workspace
+echo "Cloning repository to workspace..."
+git clone "$REPO_PATH" "$WORK_DIR"
+cd "$WORK_DIR"
+
+echo "Checking out branch: $branch"
+git checkout "$branch"
+
+# Update terraform submodule
+echo "Updating terraform submodule..."
+git submodule update --init --recursive
+
+# Copy terraform code to permanent location
+echo "Syncing terraform code..."
+rsync -av --delete "$WORK_DIR/terraform/" "$TERRAFORM_DIR/"
+
+# Set permissions
+chown -R git:git "$TERRAFORM_DIR"
+
+echo ""
+echo "=== Running Fabric Deployment ==="
+
+# Run Fabric deployment
+cd /home/git
+if [ -n "$HOME_LXD_HOST" ] && [ -n "$HOME_LXD_USER" ]; then
+    echo "Deploying to $HOME_LXD_USER@$HOME_LXD_HOST..."
+    
+    # Source environment variables for Fabric
+    export TF_HOST="$HOME_LXD_HOST"
+    export TF_USER="$HOME_LXD_USER"
+    
+    # Run fabric tasks
+    fab init --scenario=bridge-networking || true
+    fab validate --scenario=bridge-networking || true
+    fab plan --scenario=bridge-networking --env=dev || true
+    fab apply --scenario=bridge-networking --env=dev || true
+    
+    echo "✓ Deployment triggered successfully"
+else
+    echo "⚠ WARNING: HOME_LXD_HOST and HOME_LXD_USER not set"
+    echo "  Set these in your Akash deployment to enable auto-deployment"
+fi
+
+# Cleanup
+rm -rf "$WORK_DIR"
+
+echo ""
+echo "=== GitOps Deployment Complete ==="
