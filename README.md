@@ -26,9 +26,17 @@ Developed by [DurianLAB](https://durianlab.tech/).
 │   ├── hooks/
 │   │   └── post-receive       # Git trigger hook
 │   └── README.md              # Akash setup documentation
+├── docs/
+│   └── DIAGRAMS.md            # SysML activity diagrams for deployment flows
 ├── fabfile.py                 # Fabric automation tasks
 └── README.md                  # This file
 ```
+
+## Documentation
+
+- **[Architecture Diagrams](docs/DIAGRAMS.md)** - SysML activity diagrams showing deployment workflows for both network configurations (bridge and macvlan)
+- **[Akash Setup](akash/README.md)** - Complete guide for GitOps management plane
+- **[Troubleshooting](terraform/TROUBLESHOOTING.md)** - Network configuration troubleshooting
 
 ## Akash GitOps Management Plane
 
@@ -248,6 +256,15 @@ git submodule update --remote
 - SSH public key for ansible user (will be generated during setup)
 
 ## Quick Start
+
+### Visual Deployment Guides
+
+📊 **[View SysML Activity Diagrams](docs/DIAGRAMS.md)** - Visual workflows for:
+- GitOps overview (end-to-end flow)
+- Bridge networking deployment (development)
+- Macvlan networking deployment (production)
+- Network selection decision tree
+- Error handling procedures
 
 ### Remote Deployment Workflow
 
