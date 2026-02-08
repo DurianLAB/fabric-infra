@@ -25,18 +25,52 @@ Developed by [DurianLAB](https://durianlab.tech/).
 
 ## Fabric Automation
 
-This repository includes [Fabric](https://www.fabfile.org/) automation tasks to simplify Terraform operations. Fabric provides a Pythonic way to automate deployment workflows.
+This repository includes [Fabric](https://www.fabfile.org/) automation tasks to simplify Terraform operations. **All Terraform commands run on a remote host via SSH**, allowing you to manage infrastructure from your local machine.
 
 ### Prerequisites
 
+**Local Machine:**
 ```bash
 pip install fabric
 ```
+
+**Remote Host (where Terraform/LXD runs):**
+- Ubuntu/Debian Linux
+- Terraform >= 1.0
+- LXD installed and configured
+- SSH access with your user
+- SSH public key at `~/fabric/terraform/id_ed25519.pub`
+
+### Configuration
+
+Set environment variables or pass parameters:
+
+```bash
+# Option 1: Environment variables
+export TF_HOST=192.168.1.100
+export TF_USER=ubuntu
+
+# Option 2: Command line parameters
+fab apply --scenario=bridge-networking --env=dev --host=192.168.1.100 --user=ubuntu
+```
+
+### First Time Setup
+
+1. **Setup the remote machine** (one-time):
+   ```bash
+   fab setup --host=192.168.1.100 --user=ubuntu
+   ```
+
+2. **Initialize and deploy**:
+   ```bash
+   fab init apply --scenario=bridge-networking --env=dev
+   ```
 
 ### Available Fabric Tasks
 
 | Task | Description | Example |
 |------|-------------|---------|
+| `setup` | Setup remote host and clone repo | `fab setup --host=192.168.1.100` |
 | `init` | Initialize Terraform | `fab init --scenario=bridge-networking` |
 | `plan` | Plan Terraform changes | `fab plan --scenario=bridge-networking --env=dev` |
 | `apply` | Apply Terraform changes | `fab apply --scenario=macvlan-networking --env=prod` |
@@ -44,9 +78,27 @@ pip install fabric
 | `validate` | Validate configuration | `fab validate --scenario=bridge-networking` |
 | `test` | Run connectivity tests | `fab test --scenario=macvlan-networking` |
 | `deploy-all` | Deploy to all environments | `fab deploy-all --scenario=bridge-networking` |
+| `status` | Check deployment status | `fab status` |
+| `logs` | View K3s logs | `fab logs --env=dev` |
+| `shell` | Open shell in container | `fab shell --env=dev` |
+| `update-submodule` | Update terraform code | `fab update-submodule` |
 
-### Quick Start with Fabric
+### Quick Start with Fabric (Remote)
 
+**1. Configure Remote Host:**
+```bash
+# Set environment variables
+export TF_HOST=192.168.1.100      # Your LXD/Terraform server
+export TF_USER=ubuntu              # SSH username
+```
+
+**2. First Time Setup (Remote Machine):**
+```bash
+# This clones the repo and installs dependencies on remote host
+fab setup
+```
+
+**3. Deploy Infrastructure:**
 ```bash
 # Initialize and deploy bridge networking (development)
 fab init --scenario=bridge-networking
@@ -59,6 +111,18 @@ fab apply --scenario=macvlan-networking --env=prod
 # Run validation and tests
 fab validate --scenario=bridge-networking
 fab test --scenario=bridge-networking
+```
+
+**4. Monitor and Manage:**
+```bash
+# Check deployment status
+fab status
+
+# View K3s logs
+fab logs --env=dev
+
+# Open shell in container
+fab shell --env=dev
 ```
 
 ### Setup with Git Submodules
@@ -78,76 +142,6 @@ git submodule update --init --recursive
 **Update submodule to latest:**
 ```bash
 git submodule update --remote
-```
-
-### Fabric Task File
-
-Create a `fabfile.py` in the repository root:
-
-```python
-from fabric import task
-
-TERRAFORM_DIR = "terraform"
-
-@task
-def init(c, scenario="bridge-networking"):
-    """Initialize Terraform for the specified scenario"""
-    with c.cd(f"{TERRAFORM_DIR}/scenarios/{scenario}"):
-        c.run("terraform init")
-
-@task
-def plan(c, scenario="bridge-networking", env="dev"):
-    """Plan Terraform changes"""
-    with c.cd(f"{TERRAFORM_DIR}/scenarios/{scenario}"):
-        c.run(f"terraform workspace select {env} || terraform workspace new {env}")
-        c.run(f"terraform plan -var='ssh_public_key=$(cat ../../../id_ed25519.pub)'")
-
-@task
-def apply(c, scenario="bridge-networking", env="dev", auto_approve=False):
-    """Apply Terraform changes"""
-    with c.cd(f"{TERRAFORM_DIR}/scenarios/{scenario}"):
-        c.run(f"terraform workspace select {env}")
-        auto = "-auto-approve" if auto_approve else ""
-        c.run(f"terraform apply {auto} -var='ssh_public_key=$(cat ../../../id_ed25519.pub)'")
-
-@task
-def destroy(c, scenario="bridge-networking", env="dev"):
-    """Destroy Terraform infrastructure"""
-    with c.cd(f"{TERRAFORM_DIR}/scenarios/{scenario}"):
-        c.run(f"terraform workspace select {env}")
-        c.run("terraform destroy -var='ssh_public_key=$(cat ../../../id_ed25519.pub)'")
-
-@task
-def validate(c, scenario="bridge-networking"):
-    """Validate Terraform configuration"""
-    with c.cd(f"{TERRAFORM_DIR}/scenarios/{scenario}"):
-        c.run("terraform validate")
-        c.run("terraform fmt -check")
-
-@task
-def test(c, scenario="bridge-networking"):
-    """Run connectivity tests"""
-    with c.cd(TERRAFORM_DIR):
-        if scenario == "macvlan-networking":
-            c.run("./test-macvlan-connectivity.sh")
-            c.run("./test-external-connectivity.sh")
-        c.run("./vm-connectivity-test.sh")
-
-@task
-def deploy_all(c, scenario="bridge-networking"):
-    """Deploy to dev, staging, and prod sequentially"""
-    for env in ["dev", "staging", "prod"]:
-        print(f"\n{'='*50}")
-        print(f"Deploying to {env} environment...")
-        print(f"{'='*50}\n")
-        init(c, scenario)
-        apply(c, scenario, env, auto_approve=True)
-
-@task
-def update_submodule(c):
-    """Update terraform submodule to latest version"""
-    c.run("git submodule update --remote")
-    c.run("git status")
 ```
 
 ## Networking Scenarios
@@ -180,31 +174,51 @@ def update_submodule(c):
 
 ## Prerequisites
 
-- Terraform >= 1.0
-- LXD installed and configured on the host
-- SSH key for ansible user access
-- Python >= 3.6 (for Fabric automation)
+**Local Machine (Your Laptop/Workstation):**
+- Python >= 3.6
 - Fabric (`pip install fabric`)
+- SSH key configured for remote host access
+
+**Remote Host (Terraform/LXD Server):**
+- Ubuntu/Debian Linux (or compatible)
+- Terraform >= 1.0
+- LXD installed and configured
+- Git (for cloning/updating)
+- SSH public key for ansible user (will be generated during setup)
 
 ## Quick Start
 
-1. Choose your networking scenario:
-   - **Development**: `cd scenarios/bridge-networking`
-   - **Production**: `cd scenarios/macvlan-networking`
+### Remote Deployment Workflow
 
-2. Initialize and deploy:
+1. **Configure your remote host:**
    ```bash
-   terraform init
-   terraform workspace select <env>  # dev, staging, or prod
-   terraform plan -var="ssh_public_key=$(cat ../../id_ed25519.pub)"
-   terraform apply -var="ssh_public_key=$(cat ../../id_ed25519.pub)"
+   export TF_HOST=192.168.1.100  # Your LXD/Terraform server
+   export TF_USER=ubuntu
+   ```
+
+2. **Setup remote machine** (one-time):
+   ```bash
+   fab setup
+   ```
+
+3. **Choose your networking scenario and deploy:**
+   - **Development**: `--scenario=bridge-networking`
+   - **Production**: `--scenario=macvlan-networking`
+
+4. **Deploy with Fabric:**
+   ```bash
+   fab init apply --scenario=bridge-networking --env=dev
    ```
 
 ### Using Fabric (Recommended)
 
 ```bash
-# First, ensure submodule is initialized
-git submodule update --init --recursive
+# Set remote host (or use --host/--user flags)
+export TF_HOST=192.168.1.100
+export TF_USER=ubuntu
+
+# First time setup on remote machine
+fab setup
 
 # One-line deployment
 fab init apply --scenario=bridge-networking --env=dev
@@ -212,8 +226,11 @@ fab init apply --scenario=bridge-networking --env=dev
 # Full workflow with validation
 fab init validate plan apply test --scenario=macvlan-networking --env=prod
 
-# Update terraform module to latest
+# Update terraform module to latest on remote
 fab update-submodule
+
+# Check what's running
+fab status
 ```
 
 ### Bridge Scenario (`scenarios/bridge-networking/`)
@@ -353,7 +370,18 @@ Contributions are welcome! Please feel free to submit a Pull Request. Here's how
 
 ## Fabric Troubleshooting
 
-- **Fabric not found**: Install with `pip install fabric`
-- **Permission denied**: Ensure SSH keys are properly configured
+### Connection Issues
+- **"Please set TF_HOST environment variable"**: Set `export TF_HOST=<remote-ip>` or use `--host=<ip>`
+- **"Please set TF_USER environment variable"**: Set `export TF_USER=<username>` or use `--user=<username>`
+- **SSH connection refused**: Ensure remote host is reachable and SSH is running
+- **Permission denied**: Add your SSH key to remote host: `ssh-copy-id user@host`
+
+### Remote Execution Issues
+- **Terraform not found**: Run `fab setup` to ensure Terraform is installed on remote
+- **LXD not found**: Install LXD on remote: `snap install lxd` or `apt install lxd`
+- **"No such file or directory"**: Run `fab setup` first to clone the repo on remote
 - **Terraform workspace errors**: Run `fab init` first before other commands
-- **Connection errors**: Verify LXD is running: `lxc list`
+
+### General Issues
+- **Fabric not found**: Install with `pip install fabric`
+- **Submodule issues**: Run `fab update-submodule` to sync latest terraform code
