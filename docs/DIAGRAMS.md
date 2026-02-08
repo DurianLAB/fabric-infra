@@ -219,7 +219,7 @@ flowchart TD
     CreateResources --> CreateNetwork[Create LXD<br/>Macvlan Network<br/>k3s-prod-net]
     CreateNetwork --> NetworkConfig[Configure:<br/>- Parent: eth0<br/>- Type: macvlan<br/>- DHCP: External]
     
-    NetworkConfig --> WarningHost[⚠️ Warning:<br/>Host isolation<br/>enforced]
+    NetworkConfig --> WarningHost[[WARNING] Warning:<br/>Host isolation<br/>enforced]
     
     WarningHost --> CreateProfile[Create LXD<br/>Profile<br/>k3s-prod-profile]
     
@@ -250,7 +250,7 @@ flowchart TD
     TestConnectivity --> TestExternal[Test from<br/>External Client]
     
     TestExternal --> VerifyHostIsolation{Host<br/>isolated?}
-    VerifyHostIsolation -->|No| Warning[⚠️ Security<br/>Warning]
+    VerifyHostIsolation -->|No| Warning[[WARNING] Security<br/>Warning]
     Warning --> Continue
     VerifyHostIsolation -->|Yes| Continue[Continue]
     
@@ -284,8 +284,8 @@ flowchart TD
 |--------|--------------|
 | **Network Type** | LXD Macvlan (L2 bridging) |
 | **IP Range** | 192.168.1.x/24 (host subnet) |
-| **Host Access** | ❌ Isolated (L2 limitation) |
-| **External Access** | ✅ Direct from network |
+| **Host Access** | [X] Isolated (L2 limitation) |
+| **External Access** | [OK] Direct from network |
 | **Use Case** | Production, services |
 | **Security** | VMs isolated from host |
 | **DNS** | External (router/DNS server) |
@@ -307,7 +307,7 @@ flowchart TD
     Question1 -->|Testing| DevPath
     
     DevPath --> Question2{Need external<br/>access?}
-    Question2 -->|No| SelectBridge[✅ Select<br/>Bridge Networking]
+    Question2 -->|No| SelectBridge[[OK] Select<br/>Bridge Networking]
     Question2 -->|Yes, port forward| SelectBridge
     Question2 -->|Yes, direct| Question3{Host access<br/>required?}
     
@@ -315,17 +315,17 @@ flowchart TD
     Question4 -->|No| Question5{Need high<br/>security?}
     Question4 -->|Yes| Question6{Have dedicated<br/>IP range?}
     
-    Question5 -->|Yes| SelectBridge2[✅ Select<br/>Bridge + Port Forward]
+    Question5 -->|Yes| SelectBridge2[[OK] Select<br/>Bridge + Port Forward]
     Question5 -->|No| Question3
     
     Question6 -->|No| AllocateIP[Allocate static<br/>IP range first]
     AllocateIP --> Question6
     Question6 -->|Yes| Question7{OK with host<br/>isolation?}
     
-    Question7 -->|No| Warning1[⚠️ Warning:<br/>Macvlan isolates host]
+    Question7 -->|No| Warning1[[WARNING] Warning:<br/>Macvlan isolates host]
     Warning1 --> Question8{Accept<br/>limitation?}
-    Question8 -->|No| SelectBridge3[✅ Select<br/>Bridge Networking]
-    Question8 -->|Yes| SelectMacvlan[✅ Select<br/>Macvlan Networking]
+    Question8 -->|No| SelectBridge3[[OK] Select<br/>Bridge Networking]
+    Question8 -->|Yes| SelectMacvlan[[OK] Select<br/>Macvlan Networking]
     Question7 -->|Yes| SelectMacvlan
     
     SelectBridge --> BridgeDeploy[Deploy with:<br/>--scenario=bridge-networking]
@@ -337,7 +337,7 @@ flowchart TD
     BridgeDeploy --> BridgeConfig[Network: 10.150.x.x<br/>NAT: Enabled<br/>Access: Port forward]
     MacvlanDeploy --> MacvlanConfig[Network: 192.168.1.x<br/>NAT: Disabled<br/>Access: Direct]
     
-    Question3 -->|Yes| SelectBridge4[✅ Select<br/>Bridge Networking]
+    Question3 -->|Yes| SelectBridge4[[OK] Select<br/>Bridge Networking]
     SelectBridge4 --> BridgeDeploy
     
     style Start fill:#87CEEB
@@ -353,13 +353,13 @@ flowchart TD
 
 | Criteria | Bridge | Macvlan |
 |----------|--------|---------|
-| **Development** | ✅ Best choice | ⚠️ Overkill |
-| **Production** | ⚠️ Limited | ✅ Best choice |
-| **Host Access Required** | ✅ Yes | ❌ No |
-| **Direct External Access** | ⚠️ Port forward | ✅ Native |
-| **Network Isolation** | ✅ High | ⚠️ Medium |
-| **Simple Setup** | ✅ Yes | ⚠️ More complex |
-| **Multiple IPs Available** | N/A | ✅ Required |
+| **Development** | [OK] Best choice | [WARNING] Overkill |
+| **Production** | [WARNING] Limited | [OK] Best choice |
+| **Host Access Required** | [OK] Yes | [X] No |
+| **Direct External Access** | [WARNING] Port forward | [OK] Native |
+| **Network Isolation** | [OK] High | [WARNING] Medium |
+| **Simple Setup** | [OK] Yes | [WARNING] More complex |
+| **Multiple IPs Available** | N/A | [OK] Required |
 
 ---
 
@@ -491,12 +491,12 @@ sudo kubectl get nodes              # Check K3s nodes
 
 | Symbol | Meaning |
 |--------|---------|
-| 🟢 Green | Start/End, Success states |
-| 🟡 Yellow | Warnings, Production paths |
-| 🔴 Red | Errors, Failure states |
-| 🟠 Orange | Warnings, Caution required |
-| 🔵 Blue | Decision points |
-| ⚪ White | Process steps |
+| [GREEN] Green | Start/End, Success states |
+| [YELLOW] Yellow | Warnings, Production paths |
+| [RED] Red | Errors, Failure states |
+| [ORANGE] Orange | Warnings, Caution required |
+| [BLUE] Blue | Decision points |
+| [WHITE] White | Process steps |
 
 ---
 

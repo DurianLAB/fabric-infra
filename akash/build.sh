@@ -16,7 +16,7 @@ echo "Pushing to Docker Hub..."
 docker push ${DOCKER_USER}/${IMAGE_NAME}:${TAG}
 
 echo ""
-echo "✓ Image built and pushed: ${DOCKER_USER}/${IMAGE_NAME}:${TAG}"
+echo "[OK] Image built and pushed: ${DOCKER_USER}/${IMAGE_NAME}:${TAG}"
 echo ""
 echo "Next steps:"
 echo "1. Update deploy.yml with your Docker Hub username"

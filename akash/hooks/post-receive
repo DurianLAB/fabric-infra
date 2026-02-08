@@ -57,7 +57,7 @@ if [ -n "$HOME_LXD_HOST" ] && [ -n "$HOME_LXD_USER" ]; then
     fab plan --scenario=bridge-networking --env=dev || true
     fab apply --scenario=bridge-networking --env=dev || true
     
-    echo "✓ Deployment triggered successfully"
+    echo "[OK] Deployment triggered successfully"
 else
     echo "⚠ WARNING: HOME_LXD_HOST and HOME_LXD_USER not set"
     echo "  Set these in your Akash deployment to enable auto-deployment"

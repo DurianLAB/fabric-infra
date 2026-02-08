@@ -259,7 +259,7 @@ git submodule update --remote
 
 ### Visual Deployment Guides
 
-📊 **[View SysML Activity Diagrams](docs/DIAGRAMS.md)** - Visual workflows for:
+[DIAGRAM] **[View SysML Activity Diagrams](docs/DIAGRAMS.md)** - Visual workflows for:
 - GitOps overview (end-to-end flow)
 - Bridge networking deployment (development)
 - Macvlan networking deployment (production)

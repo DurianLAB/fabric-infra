@@ -42,7 +42,7 @@ def setup(c, host=None, user=None):
         # Initialize submodule
         conn.run("cd ~/fabric && git submodule update --init --recursive")
         
-    print("✓ Remote setup complete")
+    print("[OK] Remote setup complete")
 
 @task
 def init(c, scenario="bridge-networking", host=None, user=None):
